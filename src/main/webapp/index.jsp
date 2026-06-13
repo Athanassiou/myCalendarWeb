@@ -196,16 +196,73 @@
             cursor: pointer;
         }
         .modal-close:hover { color: var(--text); }
+
+        /* Panel visibility */
+        body.hide-clock    #panel-clock,
+        body.hide-overview #panel-overview,
+        body.hide-details  #panel-details,
+        body.hide-age      #panel-age { display: none; }
+
+        /* Toggle switches */
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .switch-row:last-child { border-bottom: none; }
+        .switch-row span { font-size: 0.9rem; color: var(--text); }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 42px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch .switch-track {
+            position: absolute;
+            inset: 0;
+            background: var(--border);
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .switch .switch-track::before {
+            content: "";
+            position: absolute;
+            left: 3px;
+            bottom: 3px;
+            width: 18px;
+            height: 18px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .switch input:checked + .switch-track { background: var(--accent-dim); }
+        .switch input:checked + .switch-track::before {
+            transform: translateX(18px);
+            background: var(--accent);
+        }
     </style>
 </head>
 <body>
 
 <script>
-var _c = localStorage.getItem('n3sidebar') === 'compact';
-if (localStorage.getItem('n3theme') === 'grey')
-    document.body.className = _c ? 'grey-mode compact' : 'grey-mode';
-else if (_c)
-    document.body.className = 'compact';
+(function () {
+    var cls = [];
+    if (localStorage.getItem('n3theme') === 'grey') cls.push('grey-mode');
+    if (localStorage.getItem('n3sidebar') === 'compact') cls.push('compact');
+    try {
+        var panels = JSON.parse(localStorage.getItem('d2g_panels') || '{}');
+        if (panels.clock    === false) cls.push('hide-clock');
+        if (panels.overview === false) cls.push('hide-overview');
+        if (panels.details  === false) cls.push('hide-details');
+        if (panels.age      === false) cls.push('hide-age');
+    } catch (e) {}
+    if (cls.length) document.body.className = cls.join(' ');
+})();
 </script>
 
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -222,6 +279,7 @@ else if (_c)
         <span class="nav-section-label">Rentenrechner</span>
         <a class="nav-item active" href="<%= ctx %>/"><i class="fa-solid fa-fw fa-calendar-days"></i> Dashboard</a>
         <a class="nav-item" href="#" id="settingsLink"><i class="fa-solid fa-fw fa-sliders"></i> Einstellungen</a>
+        <a class="nav-item" href="#" id="panelsLink"><i class="fa-solid fa-fw fa-table-cells"></i> Panels</a>
     </nav>
     <div class="sidebar-footer">
         <button class="theme-toggle" id="themeToggle">
@@ -240,7 +298,7 @@ else if (_c)
     <div class="dashboard">
 
         <!-- Panel 1: Digitaluhr -->
-        <div class="panel">
+        <div class="panel" id="panel-clock">
             <div class="panel-title">Uhrzeit &amp; Datum</div>
             <div class="big-num" id="clock-day" style="font-size:1.4rem; margin-bottom:0.2rem"></div>
             <div class="lbl"    id="clock-date" style="font-size:1.1rem; color:var(--text)"></div>
@@ -249,7 +307,7 @@ else if (_c)
         </div>
 
         <!-- Panel 2: Übersicht -->
-        <div class="panel">
+        <div class="panel" id="panel-overview">
             <div class="panel-title">Übersicht</div>
             <div class="lbl">Zieldatum</div>
             <div id="ov-date" style="font-size:1.1rem; font-weight:600; color:var(--text)"><%= result.getFormattedDate() %></div>
@@ -274,7 +332,7 @@ else if (_c)
         </div>
 
         <!-- Panel 3: Detailwerte -->
-        <div class="panel">
+        <div class="panel" id="panel-details">
             <div class="panel-title">Detailwerte</div>
             <div class="detail-grid">
                 <div class="detail-cell">
@@ -307,7 +365,7 @@ else if (_c)
         </div>
 
         <!-- Panel 4: Zielalter -->
-        <div class="panel">
+        <div class="panel" id="panel-age">
             <div class="panel-title">Zielalter</div>
             <div class="lbl">Alter bei Zieldatum</div>
             <div class="big-num" id="sl-age"><%= result.age %></div>
@@ -381,6 +439,42 @@ else if (_c)
     </div>
     </div>
 
+    <!-- Panels modal -->
+    <div class="modal-overlay" id="panelsOverlay">
+    <div class="settings-card" id="panels">
+        <button type="button" class="modal-close" id="panelsClose" aria-label="Schließen"><i class="fa-solid fa-xmark"></i></button>
+        <div class="settings-title"><i class="fa-solid fa-table-cells"></i> Panels</div>
+        <div class="switch-row">
+            <span>Uhrzeit &amp; Datum</span>
+            <label class="switch">
+                <input type="checkbox" id="panel-toggle-clock">
+                <span class="switch-track"></span>
+            </label>
+        </div>
+        <div class="switch-row">
+            <span>Übersicht</span>
+            <label class="switch">
+                <input type="checkbox" id="panel-toggle-overview">
+                <span class="switch-track"></span>
+            </label>
+        </div>
+        <div class="switch-row">
+            <span>Detailwerte</span>
+            <label class="switch">
+                <input type="checkbox" id="panel-toggle-details">
+                <span class="switch-track"></span>
+            </label>
+        </div>
+        <div class="switch-row">
+            <span>Zielalter</span>
+            <label class="switch">
+                <input type="checkbox" id="panel-toggle-age">
+                <span class="switch-track"></span>
+            </label>
+        </div>
+    </div>
+    </div>
+
 </main>
 
 <script src="<%= ctx %>/n3Sidebar.js"></script>
@@ -444,6 +538,41 @@ else if (_c)
         if (e.target === settingsOverlay) closeSettings();
     });
     settingsForm.addEventListener('submit', closeSettings);
+
+    // ---- Panels modal ----
+    var panelsLink    = document.getElementById('panelsLink');
+    var panelsOverlay = document.getElementById('panelsOverlay');
+    var panelsClose   = document.getElementById('panelsClose');
+
+    var panelDefs = [
+        { key: 'clock',    hideClass: 'hide-clock',    toggleId: 'panel-toggle-clock' },
+        { key: 'overview', hideClass: 'hide-overview', toggleId: 'panel-toggle-overview' },
+        { key: 'details',  hideClass: 'hide-details',  toggleId: 'panel-toggle-details' },
+        { key: 'age',      hideClass: 'hide-age',      toggleId: 'panel-toggle-age' }
+    ];
+    var panelPrefs;
+    try { panelPrefs = JSON.parse(localStorage.getItem('d2g_panels') || '{}'); }
+    catch (e) { panelPrefs = {}; }
+
+    panelDefs.forEach(function (p) {
+        var visible = panelPrefs[p.key] !== false;
+        var cb = document.getElementById(p.toggleId);
+        cb.checked = visible;
+        cb.addEventListener('change', function () {
+            document.body.classList.toggle(p.hideClass, !cb.checked);
+            panelPrefs[p.key] = cb.checked;
+            localStorage.setItem('d2g_panels', JSON.stringify(panelPrefs));
+        });
+    });
+
+    panelsLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        panelsOverlay.classList.add('open');
+    });
+    panelsClose.addEventListener('click', function () { panelsOverlay.classList.remove('open'); });
+    panelsOverlay.addEventListener('click', function (e) {
+        if (e.target === panelsOverlay) panelsOverlay.classList.remove('open');
+    });
 })();
 </script>
 
