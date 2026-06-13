@@ -1,0 +1,5 @@
+target/
+.idea/
+.claude/settings.local.json
+*.class
+.DS_Store
