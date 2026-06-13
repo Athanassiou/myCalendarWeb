@@ -23,6 +23,9 @@
     <link rel="stylesheet" href="/styles/n3-driver.css">
     <style>
         body.compact .main { margin-left: var(--sidebar-compact); }
+        .nav-section-label .label-compact { display: none; }
+        body.compact .nav-section-label .label-full { display: none; }
+        body.compact .nav-section-label .label-compact { display: inline; }
         .main {
             margin-left: var(--sidebar-width);
             padding: 1.5rem;
@@ -276,7 +279,7 @@
         </a>
     </div>
     <nav class="sidebar-nav">
-        <span class="nav-section-label">Rentenrechner</span>
+        <span class="nav-section-label"><span class="label-full">Countdown</span><span class="label-compact">D2GO</span></span>
         <a class="nav-item active" href="<%= ctx %>/"><i class="fa-solid fa-fw fa-calendar-days"></i> Dashboard</a>
         <a class="nav-item" href="#" id="settingsLink"><i class="fa-solid fa-fw fa-sliders"></i> Einstellungen</a>
         <a class="nav-item" href="#" id="panelsLink"><i class="fa-solid fa-fw fa-table-cells"></i> Panels</a>

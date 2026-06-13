@@ -31,12 +31,31 @@ There are no automated tests. Manual testing via browser at `http://localhost:80
 | `CalendarEngine` | Pure Java calculation logic — no AWT. Computes Easter algorithmically (Gauss/Spencer) to derive German federal holidays for any year (Bayern/BW set: includes Fronleichnam). Replaces the `myDataPack` + flat-file approach of the Swing original. |
 | `UserPreferences` | Bean holding the 8 user settings. Reads/writes a single cookie `d2g_prefs` (`_`-separated integers — RFC 6265 forbids commas in cookie values). |
 | `CalcResult` | Immutable result bean — populated by `CalendarEngine.calculate()`. |
-| `CalendarServlet` | Maps to `/` and `/index`. GET: computes and forwards to `index.jsp`. POST: reads form, saves cookie, redirects (PRG pattern). |
+| `CalendarServlet` | Maps to `` (context root) and `/index` — **not** `/`, which would make it the default servlet and swallow static resource requests (`.js`, etc.). GET: computes and forwards to `index.jsp`. POST: reads form, saves cookie, redirects (PRG pattern). |
 | `SliderServlet` | Maps to `/slider`. GET with `?age=X` param — calculates with target year = birthYear + age, returns JSON for live AJAX updates. |
 
 ### JSP
 
 `index.jsp` — single-page dashboard. N3 Dark Theme CSS is referenced from the shared Tomcat ROOT context (`/styles/n3.css`, `/styles/n3-driver.css`) — do **not** bundle these into the WAR. `n3Sidebar.js` is bundled in `src/main/webapp/`.
+
+Dashboard panels: **Uhrzeit & Datum**, **Übersicht**, **Detailwerte**, **Zielalter** (`#panel-clock`, `#panel-overview`, `#panel-details`, `#panel-age`). The Zielalter slider has a fixed range of 61–70 with equidistant ticks (61/64/67/70).
+
+Sidebar nav-section-label reads "Countdown", shrinking to "D2GO" in compact mode (`.label-full` / `.label-compact`).
+
+### Modals (popups)
+
+Two modals, both styled via `.modal-overlay` / `.settings-card`, opened from sidebar links and closed via the × button, click-outside, or (Settings) submitting the form:
+
+- **Einstellungen** (`#settingsOverlay`) — the 8-field preferences form, POSTs to `/` on "Übernehmen".
+- **Panels** (`#panelsOverlay`) — 4 on/off switches to show/hide each dashboard panel. State persists client-side in `localStorage` under `d2g_panels` (JSON, e.g. `{"clock":false}`), applied early in `<body>` via `body.hide-*` classes to avoid flicker.
+
+### Client-side localStorage keys
+
+| Key | Values | Purpose |
+|---|---|---|
+| `n3theme` | `dark` / `grey` | Grey Mode toggle |
+| `n3sidebar` | `full` / `compact` | Sidebar compact toggle |
+| `d2g_panels` | JSON `{clock,overview,details,age: bool}` | Per-panel visibility (Panels popup) |
 
 ### Preferences mapping
 
